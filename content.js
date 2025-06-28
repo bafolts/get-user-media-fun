@@ -7,6 +7,7 @@
 
 // 1. Inject the main script into the page's context.
 const s = document.createElement('script');
+s.type = 'module';
 s.src = chrome.runtime.getURL('injected.js');
 (document.head || document.documentElement).appendChild(s);
 s.onload = function() {
