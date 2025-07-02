@@ -25,7 +25,6 @@ const createImageSegmenter = async () => {
     baseOptions: {
       modelAssetPath:
           'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
-//        "https://storage.googleapis.com/mediapipe-models/image_segmenter/deeplab_v3/float32/1/deeplab_v3.tflite",
       delegate: "GPU"
     },
     runningMode: 'VIDEO',
@@ -33,7 +32,6 @@ const createImageSegmenter = async () => {
     outputConfidenceMasks: false
   });
 };
-createImageSegmenter();
 
 function isCSSFilter(filterName) {
   return filterName === 'grayscale' || filterName === 'sepia' || filterName === 'invert' || filterName === 'hue-rotate' || filterName === 'none';
@@ -86,6 +84,9 @@ video.addEventListener('loadedmetadata', () => {
 video.muted = true;
 
 function draw() {
+  if (video.ended) {
+    return;
+  }
   if (isCSSFilter(currentFilter)) {
     context.filter = getCSSFilter(currentFilter);
 	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -112,7 +113,6 @@ function draw() {
       		imageData[j + 2] = screenImageData ? screenImageData[j + 2] : 0;
       		imageData[j + 3] = screenImageData ? screenImageData[j + 3] : 255;
         }
-        // j += 4;
   		}
       const uint8Array = new Uint8ClampedArray(imageData.buffer);
       const dataNew = new ImageData(uint8Array, video.videoWidth, video.videoHeight);
@@ -124,8 +124,17 @@ function draw() {
 
 navigator.mediaDevices.getUserMedia = async function(constraints) {
   if (constraints && constraints.video) {
+    createImageSegmenter();
     try {
+
+      if (typeof constraints.video === 'object') {
+        constraints.video.width = 1280;
+        constraints.video.height = 720;
+      }
+
       const stream = await originalGetUserMedia(constraints);
+      video.width = 1920;
+      video.height = 1080;
       video.srcObject = stream;
       video.play();
         
