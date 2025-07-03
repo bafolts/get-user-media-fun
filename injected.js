@@ -16,12 +16,19 @@ const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 const video = document.createElement('video');
 
-const createImageSegmenter = async () => {
-  const audio = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm"
-  );
+let filesetResolver;
 
-  imageSegmenter = await ImageSegmenter.createFromOptions(audio, {
+async function getFilesetResolver() {
+  if (!filesetResolver) {
+    filesetResolver = FilesetResolver.forVisionTasks(
+      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm"
+    );
+  }
+  return await filesetResolver;
+}
+
+const createImageSegmenter = async () => {
+  imageSegmenter = await ImageSegmenter.createFromOptions(await getFilesetResolver(), {
     baseOptions: {
       modelAssetPath:
           'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
@@ -48,6 +55,15 @@ function getCSSFilter(filterName) {
 }
 
 const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+
+async function startScreenShare() {
+  screenVideo = undefined;
+  sharedScreen = navigator.mediaDevices.getDisplayMedia({ video: true });
+	screenVideo = document.createElement('video');
+	screenVideo.srcObject = await sharedScreen;
+	screenVideo.muted = true;
+	screenVideo.play();
+}
   
 window.addEventListener('message', (event) => {
   if (event.source !== window || !event.data.type) {
@@ -56,19 +72,6 @@ window.addEventListener('message', (event) => {
 
   if (event.data.type === 'FROM_EXTENSION_FILTER_UPDATE') {
     currentFilter = event.data.filter;
-    // setup screen sharing to show user option
-	  if (currentFilter === 'screen-background') {
-      screenVideo = undefined;
-      sharedScreen = undefined;
-	    const doIt = async () => {
-        sharedScreen = await navigator.mediaDevices.getDisplayMedia({ video: true });
-	      screenVideo = document.createElement('video');
-	      screenVideo.srcObject = sharedScreen;
-	      screenVideo.muted = true;
-	      screenVideo.play();
-	    };
-	    doIt();
-	  }
   }
 });
 
@@ -93,13 +96,19 @@ function draw() {
     requestAnimationFrame(draw);
   } else {
     let screenImageData;
-	  if (screenVideo) {
-	    screenContext.drawImage(screenVideo, 0, 0, screenCanvas.width, screenCanvas.height);
-      screenImageData = screenContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+    if (currentFilter === 'screen-background') {
+      if (sharedScreen === undefined) {
+        startScreenShare();
+      } else if (screenVideo) {
+	      screenContext.drawImage(screenVideo, 0, 0, screenCanvas.width, screenCanvas.height);
+        screenImageData = screenContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+      }
+    } else if (currentFilter === 'black-background' && sharedScreen !== undefined) {
+      sharedScreen = undefined;
     }
 	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
     if (!imageSegmenter) {
-      requestAnimationFrame(draw);
+      createImageSegmenter().finally(() => requestAnimationFrame(draw));
       return;
     }
 	  imageSegmenter.segmentForVideo(video, performance.now(), function (result) {
@@ -124,7 +133,6 @@ function draw() {
 
 navigator.mediaDevices.getUserMedia = async function(constraints) {
   if (constraints && constraints.video) {
-    createImageSegmenter();
     try {
 
       if (typeof constraints.video === 'object') {
