@@ -32,7 +32,11 @@
   ],
   "web_accessible_resources": [
     {
-        "resources": ["injected.js", "filters/GameBoyColor.js"],
+        "resources": [
+          "injected.js",
+          "filters/GameBoyColor.js",
+          "filters/Camcorder.js"
+        ],
         "matches": ["<all_urls>"]
     }
   ],

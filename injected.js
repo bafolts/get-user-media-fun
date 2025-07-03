@@ -5,6 +5,7 @@
 
 import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2";
 
+import { CamcorderFilter } from './filters/Camcorder.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
 
 let imageSegmenter;
@@ -99,6 +100,10 @@ function draw() {
   } else if (currentFilter === 'gameboycolor') {
 	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
     GameBoyColorFilter(canvas, context);
+    requestAnimationFrame(draw);
+  } else if (currentFilter === 'camcorder') {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    CamcorderFilter(context, canvas.width, canvas.height);
     requestAnimationFrame(draw);
   } else {
     let screenImageData;
