@@ -5,6 +5,8 @@
 
 import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2";
 
+import { GameBoyColorFilter } from './filters/GameBoyColor.js';
+
 let imageSegmenter;
 let sharedScreen;
 let currentFilter = 'none'; 
@@ -93,6 +95,10 @@ function draw() {
   if (isCSSFilter(currentFilter)) {
     context.filter = getCSSFilter(currentFilter);
 	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    requestAnimationFrame(draw);
+  } else if (currentFilter === 'gameboycolor') {
+	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    GameBoyColorFilter(canvas, context);
     requestAnimationFrame(draw);
   } else {
     let screenImageData;
