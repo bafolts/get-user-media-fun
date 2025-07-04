@@ -35,6 +35,7 @@
           "filters/GameBoyColor.js",
           "filters/Camcorder.js",
           "filters/Matrix.js",
+          "filters/Fireworks.js",
           "filters/VCR.js"
         ],
         "matches": ["<all_urls>"]

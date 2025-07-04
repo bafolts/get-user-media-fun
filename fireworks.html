@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Fireworks Display</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            background-color: black; /* Ensure a black background even if canvas isn't full screen */
+        }
+        canvas {
+            display: block; /* Removes extra space below canvas */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworksCanvas"></canvas>
+
+    <script>
+        /**
+         * Draws a firework display on a given canvas context.
+         *
+         * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas.
+         * @param {HTMLCanvasElement} canvas - The canvas element itself.
+         */
+        function drawFireworks(ctx, canvas) {
+            const particles = [];
+            const gravity = 0.05; // Simulate gravity pulling particles down
+            const friction = 0.98; // Simulate air resistance slowing particles
+
+            // Set the canvas background to black initially (fading will handle subsequent frames)
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            /**
+             * Represents a single particle in the firework display.
+             */
+            class Particle {
+                constructor(x, y, radius, color, velocity) {
+                    this.x = x;
+                    this.y = y;
+                    this.radius = radius;
+                    this.color = color;
+                    this.velocity = velocity;
+                    this.alpha = 1; // Transparency of the particle
+                    this.trail = []; // Stores previous positions for the trail
+                    this.trailLength = 10; // Number of previous positions to store
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.alpha; // Apply current transparency
+
+                    // Draw the particle's trail
+                    for (let i = 0; i < this.trail.length; i++) {
+                        const trailParticle = this.trail[i];
+                        ctx.beginPath();
+                        ctx.arc(trailParticle.x, trailParticle.y, trailParticle.radius, 0, Math.PI * 2, false);
+                        ctx.fillStyle = this.color;
+                        ctx.fill();
+                    }
+
+                    // Draw the main particle
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                update() {
+                    // Apply friction and gravity to velocity
+                    this.velocity.x *= friction;
+                    this.velocity.y *= friction;
+                    this.velocity.y += gravity;
+
+                    // Update position based on velocity
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+
+                    // Fade out the particle over time
+                    this.alpha -= 0.005;
+
+                    // Add current position to the trail
+                    this.trail.push({ x: this.x, y: this.y, radius: this.radius * 0.5 });
+                    if (this.trail.length > this.trailLength) {
+                        this.trail.shift(); // Remove oldest trail point
+                    }
+                }
+            }
+
+            /**
+             * Creates a new firework explosion.
+             * @param {number} x - The x-coordinate of the explosion center.
+             * @param {number} y - The y-coordinate of the explosion center.
+             */
+            function createFirework(x, y) {
+                const particleCount = Math.floor(Math.random() * 160); // Number of particles in the explosion
+                const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#FFFFFF'];
+                const color = colors[Math.floor(Math.random() * colors.length)]; // Random color
+
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = Math.random() * Math.PI * 2; // Random angle for particle trajectory
+                    const speed = Math.random() * 3 + 1; // Random speed for particles
+                    const velocity = {
+                        x: Math.cos(angle) * speed,
+                        y: Math.sin(angle) * speed
+                    };
+                    particles.push(new Particle(x, y, 2, color, velocity));
+                }
+            }
+
+            // Initial fireworks (e.g., at random positions in the top half)
+            for (let i = 0; i < 5; i++) {
+                createFirework(Math.random() * canvas.width, Math.random() * canvas.height / 2);
+            }
+
+
+            /**
+             * Animation loop for the fireworks.
+             */
+            function animate() {
+                // Clear the canvas with a fading black effect
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // Semi-transparent black for fade effect
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const particle = particles[i];
+                    particle.update();
+                    particle.draw();
+
+                    // Remove particles that have faded out or are too small
+                    if (particle.alpha <= 0.01 || particle.radius < 0.5) {
+                        particles.splice(i, 1);
+                    }
+                }
+
+                // Periodically create new fireworks launching from the bottom
+                if (Math.random() < 0.02) { // 2% chance each frame to launch a new firework
+                    createFirework(Math.random() * canvas.width, canvas.height * 0.9); // Launch from bottom
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate(); // Start the animation
+        }
+
+        // --- Setup and Initialization ---
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Make canvas fill the entire window
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Call the drawFireworks function to start the display
+        drawFireworks(ctx, canvas);
+
+        // Optional: Resize canvas and potentially restart/adjust fireworks if window resizes
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // For a continuous effect, you might not need to re-call drawFireworks,
+            // as the existing animation loop will adapt to the new size.
+            // If you want fireworks to reset completely, uncomment the line below:
+            // drawFireworks(ctx, canvas);
+        });
+
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@
 import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2";
 
 import { CamcorderFilter } from './filters/Camcorder.js';
+import { FireworksFilter } from './filters/Fireworks.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
 import { MatrixFilter } from './filters/Matrix.js';
 import { VCRFilter } from './filters/VCR.js';
@@ -135,6 +136,9 @@ function draw() {
 
       if (currentFilter === 'matrix-background') {
         MatrixFilter(context);
+        backgroundImageData = context.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+      } else if (currentFilter === 'fireworks-background') {
+        FireworksFilter(context, canvas.width, canvas.height);
         backgroundImageData = context.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
       } else if (currentFilter === 'screen-background') {
         backgroundImageData = screenImageData;
