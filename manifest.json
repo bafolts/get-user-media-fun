@@ -4,8 +4,6 @@
   "version": "1.0",
   "description": "Apply fun filters to your webcam!",
   "permissions": [
-    "activeTab",
-    "scripting",
     "storage"
   ],
   "action": {
