@@ -8,6 +8,7 @@ import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 import { CamcorderFilter } from './filters/Camcorder.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
 import { MatrixFilter } from './filters/Matrix.js';
+import { VCRFilter } from './filters/VCR.js';
 
 let imageSegmenter;
 let sharedScreen;
@@ -105,6 +106,10 @@ function draw() {
   } else if (currentFilter === 'camcorder') {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     CamcorderFilter(context, canvas.width, canvas.height);
+    requestAnimationFrame(draw);
+  } else if (currentFilter === 'vcr') {
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    VCRFilter(context, canvas.width, canvas.height);
     requestAnimationFrame(draw);
   } else {
     let screenImageData;

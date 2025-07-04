@@ -34,7 +34,8 @@
           "injected.js",
           "filters/GameBoyColor.js",
           "filters/Camcorder.js",
-          "filters/Matrix.js"
+          "filters/Matrix.js",
+          "filters/VCR.js"
         ],
         "matches": ["<all_urls>"]
     }
