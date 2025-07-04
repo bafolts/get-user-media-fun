@@ -7,6 +7,7 @@ import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 
 import { CamcorderFilter } from './filters/Camcorder.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
+import { MatrixFilter } from './filters/Matrix.js';
 
 let imageSegmenter;
 let sharedScreen;
@@ -114,7 +115,7 @@ function draw() {
 	      screenContext.drawImage(screenVideo, 0, 0, screenCanvas.width, screenCanvas.height);
         screenImageData = screenContext.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
       }
-    } else if (currentFilter === 'black-background' && sharedScreen !== undefined) {
+    } else if (sharedScreen !== undefined) {
       sharedScreen = undefined;
     }
 	  context.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -124,14 +125,24 @@ function draw() {
     }
 	  imageSegmenter.segmentForVideo(video, performance.now(), function (result) {
       const imageData = context.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+
+      let backgroundImageData;
+
+      if (currentFilter === 'matrix-background') {
+        MatrixFilter(context);
+        backgroundImageData = context.getImageData(0, 0, video.videoWidth, video.videoHeight).data;
+      } else if (currentFilter === 'screen-background') {
+        backgroundImageData = screenImageData;
+      }
+
   		const mask = result.categoryMask.getAsFloat32Array();
   		for (let i = 0; i < mask.length; ++i) {
         if (mask[i] === 1) {
           const j = i << 2;
-      		imageData[j] = screenImageData ? screenImageData[j] : 0;
-      		imageData[j + 1] = screenImageData ? screenImageData[j + 1] : 0;
-      		imageData[j + 2] = screenImageData ? screenImageData[j + 2] : 0;
-      		imageData[j + 3] = screenImageData ? screenImageData[j + 3] : 255;
+          imageData[j] = backgroundImageData ? backgroundImageData[j] : 0;
+          imageData[j + 1] = backgroundImageData ? backgroundImageData[j + 1] : 0;
+          imageData[j + 2] = backgroundImageData ? backgroundImageData[j + 2] : 0;
+          imageData[j + 3] = backgroundImageData ? backgroundImageData[j + 3] : 255;
         }
   		}
       const uint8Array = new Uint8ClampedArray(imageData.buffer);

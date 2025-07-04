@@ -33,7 +33,8 @@
         "resources": [
           "injected.js",
           "filters/GameBoyColor.js",
-          "filters/Camcorder.js"
+          "filters/Camcorder.js",
+          "filters/Matrix.js"
         ],
         "matches": ["<all_urls>"]
     }
