@@ -12,6 +12,7 @@ import { MatrixFilter } from './filters/Matrix.js';
 import { VCRFilter } from './filters/VCR.js';
 
 let imageSegmenter;
+let imageSegmenterPromise;
 let sharedScreen;
 let currentFilter = 'none'; 
 let screenVideo;
@@ -26,15 +27,16 @@ let filesetResolver;
 
 async function getFilesetResolver() {
   if (!filesetResolver) {
-    filesetResolver = FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm"
-    );
+    filesetResolver = FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm");
   }
   return await filesetResolver;
 }
 
 const createImageSegmenter = async () => {
-  imageSegmenter = await ImageSegmenter.createFromOptions(await getFilesetResolver(), {
+  if (imageSegmenterPromise) {
+    return;
+  }
+  imageSegmenterPromise = ImageSegmenter.createFromOptions(await getFilesetResolver(), {
     baseOptions: {
       modelAssetPath:
           'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
@@ -44,6 +46,7 @@ const createImageSegmenter = async () => {
     outputCategoryMask: true,
     outputConfidenceMasks: false
   });
+  imageSegmenter = await imageSegmenterPromise;
 };
 
 function isCSSFilter(filterName) {
