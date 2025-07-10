@@ -36,7 +36,11 @@
           "filters/Camcorder.js",
           "filters/Matrix.js",
           "filters/Fireworks.js",
-          "filters/VCR.js"
+          "filters/VCR.js",
+          "tasks-vision.js",
+          "vision_wasm_internal.js",
+          "vision_wasm_internal.wasm",
+          "selfie_segmenter.tflite"
         ],
         "matches": ["<all_urls>"]
     }

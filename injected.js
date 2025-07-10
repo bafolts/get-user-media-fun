@@ -3,8 +3,7 @@
  * It overrides getUserMedia to provide a video and audio stream that is modified.
  */
 
-import { ImageSegmenter, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2";
-
+import { ImageSegmenter } from './tasks-vision.js';
 import { CamcorderFilter } from './filters/Camcorder.js';
 import { FireworksFilter } from './filters/Fireworks.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
@@ -23,23 +22,16 @@ const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d', { willReadFrequently: true });
 const video = document.createElement('video');
 
-let filesetResolver;
-
-async function getFilesetResolver() {
-  if (!filesetResolver) {
-    filesetResolver = FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.2/wasm");
-  }
-  return await filesetResolver;
-}
-
 const createImageSegmenter = async () => {
   if (imageSegmenterPromise) {
     return;
   }
-  imageSegmenterPromise = ImageSegmenter.createFromOptions(await getFilesetResolver(), {
+  imageSegmenterPromise = ImageSegmenter.createFromOptions({
+    wasmLoaderPath: import.meta.resolve('./vision_wasm_internal.js'),
+    wasmBinaryPath: import.meta.resolve('./vision_wasm_internal.wasm')
+  }, {
     baseOptions: {
-      modelAssetPath:
-          'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite',
+      modelAssetPath: import.meta.resolve('./selfie_segmenter.tflite'),
       delegate: "GPU"
     },
     runningMode: 'VIDEO',
