@@ -9,12 +9,19 @@ import { FireworksFilter } from './filters/Fireworks.js';
 import { GameBoyColorFilter } from './filters/GameBoyColor.js';
 import { MatrixFilter } from './filters/Matrix.js';
 import { VCRFilter } from './filters/VCR.js';
+import { setup as setupOldFilmFilter, update as updateOldFilmFilter } from './filters/pixi/OldFilmFilter.js';
+import { initPixiPipeline, updatePixiFrame, destroyPixiPipeline } from './filters/pixi/pixiPipeline.js';
 
 let imageSegmenter;
 let imageSegmenterPromise;
 let sharedScreen;
 let currentFilter = 'none'; 
 let screenVideo;
+let pixiStream = null;
+let isPixiInitialized = false;
+let previousFilter = 'none';
+let setupFilter = null;
+let updateFilter = null;
 
 const screenCanvas = document.createElement('canvas');
 const screenContext = screenCanvas.getContext('2d', { willReadFrequently: true });
@@ -72,7 +79,16 @@ window.addEventListener('message', (event) => {
   }
 
   if (event.data.type === 'FROM_EXTENSION_FILTER_UPDATE') {
+    previousFilter = currentFilter;
     currentFilter = event.data.filter;
+    
+    // Handle PIXI filter switching
+    if (previousFilter === 'pixi-oldfilm' && currentFilter !== 'pixi-oldfilm') {
+      // Switching away from PIXI filter
+      destroyPixiPipeline();
+      isPixiInitialized = false;
+      pixiStream = null;
+    }
   }
 });
 
@@ -102,6 +118,37 @@ function draw() {
   } else if (currentFilter === 'camcorder') {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     CamcorderFilter(context, canvas.width, canvas.height);
+    requestAnimationFrame(draw);
+  } else if (currentFilter === 'pixi-oldfilm') {
+    setupFilter = setupOldFilmFilter;
+    updateFilter = updateOldFilmFilter;
+    // Initialize PIXI pipeline if not already done
+    if (!isPixiInitialized) {
+      try {
+        pixiStream = initPixiPipeline(video, setupFilter);
+        if (pixiStream) {
+          isPixiInitialized = true;
+        } else {
+          console.error('Failed to initialize PIXI pipeline, falling back to no filter');
+          currentFilter = 'none';
+        }
+      } catch (error) {
+        console.error('Error initializing PIXI pipeline:', error);
+        currentFilter = 'none';
+      }
+      requestAnimationFrame(draw);
+      return;
+    }
+    
+    // Update PIXI frame
+    updatePixiFrame(updateFilter);
+    
+    // Draw the PIXI canvas to the main canvas
+    const pixiCanvas = document.querySelector('canvas[id="__pixi-canvas__"]');
+    if (pixiCanvas) {
+      context.drawImage(pixiCanvas, 0, 0, canvas.width, canvas.height);
+    }
+    
     requestAnimationFrame(draw);
   } else if (currentFilter === 'vcr') {
     context.drawImage(video, 0, 0, canvas.width, canvas.height);

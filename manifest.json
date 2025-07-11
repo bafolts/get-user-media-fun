@@ -37,10 +37,14 @@
           "filters/Matrix.js",
           "filters/Fireworks.js",
           "filters/VCR.js",
+          "filters/pixi/OldFilmFilter.js",
+          "filters/pixi/pixiPipeline.js",
           "tasks-vision.js",
           "vision_wasm_internal.js",
           "vision_wasm_internal.wasm",
-          "selfie_segmenter.tflite"
+          "selfie_segmenter.tflite",
+          "third-party/pixi.min.js",
+          "third-party/pixi-filters.min.js"
         ],
         "matches": ["<all_urls>"]
     }
