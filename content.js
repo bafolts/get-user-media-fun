@@ -5,57 +5,15 @@
  * It cannot directly modify the page's JavaScript variables or functions.
  */
 
-const injectScript = (src) => {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = () => {
-            script.remove();
-            resolve();
-        };
-        script.onerror = () => {
-            script.remove();
-            reject(new Error(`Failed to load script: ${src}`));
-        };
-        (document.head || document.documentElement).appendChild(script);
-    });
+// 1. Inject the main script
+const s = document.createElement('script');
+s.type = 'module';
+s.src = chrome.runtime.getURL('injected.js');
+(document.head || document.documentElement).appendChild(s);
+s.onload = function() {
+  // Clean up the script tag from the DOM after it has been loaded.
+  s.remove();
 };
-
-const injectScriptsSequentially = async (scripts) => {
-    for (const src of scripts) {
-        try {
-            await injectScript(src);
-        } catch (error) {
-            throw error; // Stop the sequence if any script fails
-        }
-    }
-};
-
-// Function to inject the main script
-const injectMainScript = () => {
-    const s = document.createElement('script');
-    s.type = 'module';
-    s.src = chrome.runtime.getURL('injected.js');
-    (document.head || document.documentElement).appendChild(s);
-    s.onload = function() {
-        // Clean up the script tag from the DOM after it has been loaded.
-        s.remove();
-    };
-};
-
-// First, inject PIXI.js and pixi-filters in sequence, then inject the main script
-injectScriptsSequentially([
-    chrome.runtime.getURL('third-party/pixi.min.js'),
-    chrome.runtime.getURL('third-party/pixi-filters.min.js')
-]).then(() => {
-    console.log('PIXI dependencies loaded successfully, injecting main script');
-    // Now inject the main script after PIXI is loaded
-    injectMainScript();
-}).catch(error => {
-    console.error('Failed to load PIXI dependencies:', error);
-    // Still inject the main script even if PIXI fails, so other filters work
-    injectMainScript();
-});
 
 // 2. Listen for messages FROM the background script.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

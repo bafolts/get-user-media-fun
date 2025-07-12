@@ -1,3 +1,5 @@
+import '../../third-party/pixi.min.js';
+import '../../third-party/pixi-filters.min.js';
 
 // Internal state for the pipeline
 let app = null;
